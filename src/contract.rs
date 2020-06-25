@@ -13,17 +13,15 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     env: Env,
     msg: InitMsg,
 ) -> StdResult<InitResponse> {
-    {
-        // Initial balances
-        for row in msg.initial_balances {
-            let address = deps.api.canonical_address(&row.address)?;
-            balance_set(&mut deps.storage, &address, &row.amount)?;
-        }
+    // Initial balances
+    for row in msg.initial_balances {
+        let address = deps.api.canonical_address(&row.address)?;
+        balance_set(&mut deps.storage, &address, &row.amount)?;
     }
     config(&mut deps.storage).save(&Config {
-        name: msg.name.clone(),
-        symbol: msg.symbol.clone(),
-        owner: env.message.sender.clone(),
+        name: msg.name,
+        symbol: msg.symbol,
+        owner: env.message.sender,
     })?;
 
     Ok(InitResponse::default())
@@ -121,7 +119,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
         QueryMsg::Balance { address } => {
             let address = deps.api.canonical_address(&address)?;
             let balance = balance_of(&deps.storage, &address);
-            let out = to_binary(&BalanceResponse { balance: balance })?;
+            let out = to_binary(&BalanceResponse { balance })?;
             Ok(out)
         }
         QueryMsg::Config {} => {
