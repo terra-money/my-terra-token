@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InitMsg",
+  "type": "object",
+  "required": [
+    "initial_balances",
+    "name",
+    "symbol"
+  ],
+  "properties": {
+    "initial_balances": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/InitialBalance"
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "symbol": {
+      "type": "string"
+    }
+  },
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    },
+    "InitialBalance": {
+      "type": "object",
+      "required": [
+        "address",
+        "amount"
+      ],
+      "properties": {
+        "address": {
+          "$ref": "#/definitions/HumanAddr"
+        },
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        }
+      }
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}
