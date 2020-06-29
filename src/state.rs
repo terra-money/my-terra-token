@@ -14,12 +14,12 @@ pub struct Config {
     pub owner: CanonicalAddr,
 }
 
-pub fn config<S: Storage>(storage: &mut S) -> Singleton<S, Config> {
-    Singleton::new(storage, CONFIG_KEY)
+pub fn config_set<S: Storage>(storage: &mut S, config: &Config) -> StdResult<()> {
+    Singleton::new(storage, CONFIG_KEY).save(config)
 }
 
-pub fn config_read<S: Storage>(storage: &S) -> ReadonlySingleton<S, Config> {
-    ReadonlySingleton::new(storage, CONFIG_KEY)
+pub fn config_get<S: Storage>(storage: &S) -> StdResult<Config> {
+    ReadonlySingleton::new(storage, CONFIG_KEY).load()
 }
 
 pub fn balance_set<S: Storage>(
@@ -30,7 +30,7 @@ pub fn balance_set<S: Storage>(
     Bucket::new(BALANCE_KEY, storage).save(address.as_slice(), amount)
 }
 
-pub fn balance_of<S: Storage>(storage: &S, address: &CanonicalAddr) -> Uint128 {
+pub fn balance_get<S: Storage>(storage: &S, address: &CanonicalAddr) -> Uint128 {
     match ReadonlyBucket::new(BALANCE_KEY, storage).may_load(address.as_slice()) {
         Ok(Some(amount)) => amount,
         _ => Uint128::zero(),

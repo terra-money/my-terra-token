@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 
 use crate::msg::{BalanceResponse, ConfigResponse, HandleMsg, InitMsg, QueryMsg};
-use crate::state::{balance_of, balance_set, config, config_read, Config};
+use crate::state::{balance_get, balance_set, config_get, config_set, Config};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -18,11 +18,14 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         let address = deps.api.canonical_address(&row.address)?;
         balance_set(&mut deps.storage, &address, &row.amount)?;
     }
-    config(&mut deps.storage).save(&Config {
-        name: msg.name,
-        symbol: msg.symbol,
-        owner: env.message.sender,
-    })?;
+    config_set(
+        &mut deps.storage,
+        &Config {
+            name: msg.name,
+            symbol: msg.symbol,
+            owner: env.message.sender,
+        },
+    )?;
 
     Ok(InitResponse::default())
 }
@@ -49,7 +52,7 @@ fn try_transfer<S: Storage, A: Api, Q: Querier>(
     let recipient_address = &deps.api.canonical_address(recipient)?;
 
     // check that sender's funds covers
-    let mut sender_balance = balance_of(&deps.storage, sender_address);
+    let mut sender_balance = balance_get(&deps.storage, sender_address);
     if sender_balance < *amount {
         return Err(generic_err(format!(
             "Insufficient funds to send: balance={}, required={}",
@@ -58,7 +61,7 @@ fn try_transfer<S: Storage, A: Api, Q: Querier>(
     }
     // update balances
     sender_balance = (sender_balance - *amount)?;
-    let mut recipient_balance = balance_of(&deps.storage, recipient_address);
+    let mut recipient_balance = balance_get(&deps.storage, recipient_address);
     recipient_balance = recipient_balance + *amount;
 
     balance_set(&mut deps.storage, sender_address, &sender_balance)?;
@@ -87,7 +90,7 @@ fn try_burn<S: Storage, A: Api, Q: Querier>(
     // canonical address
     let sender_address = &env.message.sender;
 
-    let mut sender_balance = balance_of(&deps.storage, sender_address);
+    let mut sender_balance = balance_get(&deps.storage, sender_address);
     if sender_balance < *amount {
         return Err(generic_err(format!(
             "Insufficient funds to burn: balance={}, required={}",
@@ -118,12 +121,12 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     match msg {
         QueryMsg::Balance { address } => {
             let address = deps.api.canonical_address(&address)?;
-            let balance = balance_of(&deps.storage, &address);
+            let balance = balance_get(&deps.storage, &address);
             let out = to_binary(&BalanceResponse { balance })?;
             Ok(out)
         }
         QueryMsg::Config {} => {
-            let config = config_read(&deps.storage).load()?;
+            let config = config_get(&deps.storage)?;
             let out = to_binary(&ConfigResponse {
                 name: config.name,
                 symbol: config.symbol,
